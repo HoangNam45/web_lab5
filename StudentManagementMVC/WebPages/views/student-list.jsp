@@ -147,6 +147,173 @@ prefix="c" %>
         font-size: 64px;
         margin-bottom: 20px;
       }
+
+      .search-box {
+        background-color: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+      }
+
+      .search-box form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .search-box input[type="text"] {
+        flex: 1;
+        min-width: 250px;
+        padding: 12px 15px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+
+      .search-box input[type="text"]:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .btn-search {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+      }
+
+      .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-clear {
+        background-color: #6c757d;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+      }
+
+      .btn-clear:hover {
+        background-color: #5a6268;
+      }
+
+      .search-result-message {
+        background-color: #e7f3ff;
+        color: #004085;
+        padding: 12px 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border-left: 4px solid #667eea;
+        font-weight: 500;
+      }
+
+      .search-result-message strong {
+        color: #667eea;
+      }
+
+      .filter-sort-controls {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .filter-box {
+        flex: 1;
+        min-width: 300px;
+        background-color: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+      }
+
+      .filter-box form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .filter-box label {
+        font-weight: 600;
+        color: #555;
+        font-size: 14px;
+      }
+
+      .filter-box select {
+        padding: 10px 15px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        min-width: 200px;
+        cursor: pointer;
+        transition: border-color 0.3s;
+      }
+
+      .filter-box select:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .btn-filter {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+      }
+
+      .btn-filter:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .filter-active {
+        background-color: #e7f3ff;
+        color: #004085;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-size: 13px;
+        border-left: 3px solid #667eea;
+        font-weight: 500;
+      }
+
+      th a {
+        color: white;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: opacity 0.2s;
+      }
+
+      th a:hover {
+        opacity: 0.8;
+      }
+
+      .sort-indicator {
+        font-size: 12px;
+      }
     </style>
   </head>
   <body>
@@ -164,6 +331,58 @@ prefix="c" %>
         <div class="message error">❌ ${param.error}</div>
       </c:if>
 
+      <!-- Search Box -->
+      <div class="search-box">
+        <form action="student" method="get">
+          <input type="hidden" name="action" value="search" />
+          <input
+            type="text"
+            name="keyword"
+            value="${keyword}"
+            placeholder="🔍 Search by student code, name, or email..."
+            autocomplete="off"
+          />
+          <button type="submit" class="btn btn-search">🔍 Search</button>
+          <c:if test="${not empty keyword}">
+            <a href="student?action=list" class="btn btn-clear">
+              ❌ Clear Search
+            </a>
+          </c:if>
+        </form>
+      </div>
+
+      <!-- Search Results Message -->
+      <c:if test="${not empty keyword}">
+        <div class="search-result-message">
+          🔍 Search results for: <strong>"${keyword}"</strong>
+        </div>
+      </c:if>
+
+      <div class="filter-sort-controls">
+        <div class="filter-box">
+          <form action="student" method="get">
+            <input type="hidden" name="action" value="list" />
+            <label>📋 Filter by Major:</label>
+            <select name="major" onchange="this.form.submit()">
+              <option value="all" ${empty major || major == 'all' ? 'selected' : ''}>All Majors</option>
+              <option value="Computer Science" ${major == 'Computer Science' ? 'selected' : ''}>Computer Science</option>
+              <option value="Information Technology" ${major == 'Information Technology' ? 'selected' : ''}>Information Technology</option>
+              <option value="Software Engineering" ${major == 'Software Engineering' ? 'selected' : ''}>Software Engineering</option>
+              <option value="Business Administration" ${major == 'Business Administration' ? 'selected' : ''}>Business Administration</option>
+            </select>
+            <c:if test="${not empty major && major != 'all'}">
+              <a href="student?action=list" class="btn btn-clear">❌ Clear Filter</a>
+            </c:if>
+          </form>
+        </div>
+
+        <c:if test="${not empty major && major != 'all'}">
+          <div class="filter-active">
+            📌 Showing: <strong>${major}</strong>
+          </div>
+        </c:if>
+      </div>
+
       <!-- Add New Student Button -->
       <div style="margin-bottom: 20px">
         <a href="student?action=new" class="btn btn-primary">
@@ -177,11 +396,46 @@ prefix="c" %>
           <table>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Student Code</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Major</th>
+                <th>
+                  <a href="student?action=list&sortBy=id&order=${sortBy == 'id' && order == 'asc' ? 'desc' : 'asc'}${not empty major && major != 'all' ? '&major=' += major : ''}">
+                    ID
+                    <c:if test="${sortBy == 'id'}">
+                      <span class="sort-indicator">${order == 'asc' ? '▲' : '▼'}</span>
+                    </c:if>
+                  </a>
+                </th>
+                <th>
+                  <a href="student?action=list&sortBy=student_code&order=${sortBy == 'student_code' && order == 'asc' ? 'desc' : 'asc'}${not empty major && major != 'all' ? '&major=' += major : ''}">
+                    Student Code
+                    <c:if test="${sortBy == 'student_code'}">
+                      <span class="sort-indicator">${order == 'asc' ? '▲' : '▼'}</span>
+                    </c:if>
+                  </a>
+                </th>
+                <th>
+                  <a href="student?action=list&sortBy=full_name&order=${sortBy == 'full_name' && order == 'asc' ? 'desc' : 'asc'}${not empty major && major != 'all' ? '&major=' += major : ''}">
+                    Full Name
+                    <c:if test="${sortBy == 'full_name'}">
+                      <span class="sort-indicator">${order == 'asc' ? '▲' : '▼'}</span>
+                    </c:if>
+                  </a>
+                </th>
+                <th>
+                  <a href="student?action=list&sortBy=email&order=${sortBy == 'email' && order == 'asc' ? 'desc' : 'asc'}${not empty major && major != 'all' ? '&major=' += major : ''}">
+                    Email
+                    <c:if test="${sortBy == 'email'}">
+                      <span class="sort-indicator">${order == 'asc' ? '▲' : '▼'}</span>
+                    </c:if>
+                  </a>
+                </th>
+                <th>
+                  <a href="student?action=list&sortBy=major&order=${sortBy == 'major' && order == 'asc' ? 'desc' : 'asc'}${not empty major && major != 'all' ? '&major=' += major : ''}">
+                    Major
+                    <c:if test="${sortBy == 'major'}">
+                      <span class="sort-indicator">${order == 'asc' ? '▲' : '▼'}</span>
+                    </c:if>
+                  </a>
+                </th>
                 <th>Actions</th>
               </tr>
             </thead>

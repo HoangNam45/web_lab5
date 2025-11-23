@@ -43,6 +43,9 @@ public class StudentController extends HttpServlet {
             case "delete":
                 deleteStudent(request, response);
                 break;
+            case "search":
+                searchStudents(request, response);
+                break;
             default:
                 listStudents(request, response);
                 break;
@@ -65,18 +68,56 @@ public class StudentController extends HttpServlet {
         }
     }
     
-    // List all students
     private void listStudents(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
-        List<Student> students = studentDAO.getAllStudents();
+        String sortBy = request.getParameter("sortBy");
+        String order = request.getParameter("order");
+        String major = request.getParameter("major");
+        
+        List<Student> students;
+        
+        if ((sortBy != null || order != null) || (major != null && !major.trim().isEmpty())) {
+            students = studentDAO.getStudentsFiltered(major, sortBy, order);
+            
+            if (major != null && !major.trim().isEmpty() && !"all".equalsIgnoreCase(major)) {
+                request.setAttribute("major", major);
+            }
+            if (sortBy != null) {
+                request.setAttribute("sortBy", sortBy);
+            }
+            if (order != null) {
+                request.setAttribute("order", order);
+            }
+        } else {
+            students = studentDAO.getAllStudents();
+        }
+        
         request.setAttribute("students", students);
         
         RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-list.jsp");
         dispatcher.forward(request, response);
     }
     
-    // Show form for new student
+    private void searchStudents(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        String keyword = request.getParameter("keyword");
+        
+        List<Student> students;
+        if (keyword == null || keyword.trim().isEmpty()) {
+            students = studentDAO.getAllStudents();
+        } else {
+            students = studentDAO.searchStudents(keyword);
+        }
+        
+        request.setAttribute("students", students);
+        request.setAttribute("keyword", keyword);
+        
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-list.jsp");
+        dispatcher.forward(request, response);
+    }
+    
     private void showNewForm(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
@@ -84,7 +125,6 @@ public class StudentController extends HttpServlet {
         dispatcher.forward(request, response);
     }
     
-    // Show form for editing student
     private void showEditForm(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
@@ -97,9 +137,50 @@ public class StudentController extends HttpServlet {
         dispatcher.forward(request, response);
     }
     
-    // Insert new student
+    private boolean validateStudent(Student student, HttpServletRequest request) {
+        boolean isValid = true;
+        
+        String studentCode = student.getStudentCode();
+        if (studentCode == null || studentCode.trim().isEmpty()) {
+            request.setAttribute("errorCode", "Student code is required");
+            isValid = false;
+        } else {
+            String codePattern = "[A-Z]{2}[0-9]{3,}";
+            if (!studentCode.matches(codePattern)) {
+                request.setAttribute("errorCode", "Invalid format. Use 2 letters + 3+ digits (e.g., SV001)");
+                isValid = false;
+            }
+        }
+        
+        String fullName = student.getFullName();
+        if (fullName == null || fullName.trim().isEmpty()) {
+            request.setAttribute("errorName", "Full name is required");
+            isValid = false;
+        } else if (fullName.trim().length() < 2) {
+            request.setAttribute("errorName", "Full name must be at least 2 characters");
+            isValid = false;
+        }
+        
+        String email = student.getEmail();
+        if (email != null && !email.trim().isEmpty()) {
+            String emailPattern = "^[A-Za-z0-9+_.-]+@(.+)$";
+            if (!email.matches(emailPattern)) {
+                request.setAttribute("errorEmail", "Invalid email format");
+                isValid = false;
+            }
+        }
+        
+        String major = student.getMajor();
+        if (major == null || major.trim().isEmpty()) {
+            request.setAttribute("errorMajor", "Major is required");
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+    
     private void insertStudent(HttpServletRequest request, HttpServletResponse response) 
-            throws IOException {
+            throws ServletException, IOException {
         
         String studentCode = request.getParameter("studentCode");
         String fullName = request.getParameter("fullName");
@@ -108,6 +189,13 @@ public class StudentController extends HttpServlet {
         
         Student newStudent = new Student(studentCode, fullName, email, major);
         
+        if (!validateStudent(newStudent, request)) {
+            request.setAttribute("student", newStudent);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-form.jsp");
+            dispatcher.forward(request, response);
+            return; 
+        }
+        
         if (studentDAO.addStudent(newStudent)) {
             response.sendRedirect("student?action=list&message=Student added successfully");
         } else {
@@ -115,9 +203,8 @@ public class StudentController extends HttpServlet {
         }
     }
     
-    // Update student
     private void updateStudent(HttpServletRequest request, HttpServletResponse response) 
-            throws IOException {
+            throws ServletException, IOException {
         
         int id = Integer.parseInt(request.getParameter("id"));
         String studentCode = request.getParameter("studentCode");
@@ -127,6 +214,13 @@ public class StudentController extends HttpServlet {
         
         Student student = new Student(studentCode, fullName, email, major);
         student.setId(id);
+        
+        if (!validateStudent(student, request)) {
+            request.setAttribute("student", student);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-form.jsp");
+            dispatcher.forward(request, response);
+            return; 
+        }
         
         if (studentDAO.updateStudent(student)) {
             response.sendRedirect("student?action=list&message=Student updated successfully");

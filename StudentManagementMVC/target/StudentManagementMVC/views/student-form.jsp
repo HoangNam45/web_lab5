@@ -121,6 +121,14 @@
             color: #666;
             margin-top: 5px;
         }
+        
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            display: block;
+            margin-top: 5px;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -157,6 +165,9 @@
                        value="${student.studentCode}"
                        ${student != null ? 'readonly' : 'required'}
                        placeholder="e.g., SV001, IT123">
+                <c:if test="${not empty errorCode}">
+                    <span class="error">⚠️ ${errorCode}</span>
+                </c:if>
                 <p class="info-text">Format: 2 letters + 3+ digits</p>
             </div>
             
@@ -171,6 +182,9 @@
                        value="${student.fullName}"
                        required
                        placeholder="Enter full name">
+                <c:if test="${not empty errorName}">
+                    <span class="error">⚠️ ${errorName}</span>
+                </c:if>
             </div>
             
             <!-- Email -->
@@ -184,6 +198,9 @@
                        value="${student.email}"
                        required
                        placeholder="student@example.com">
+                <c:if test="${not empty errorEmail}">
+                    <span class="error">⚠️ ${errorEmail}</span>
+                </c:if>
             </div>
             
             <!-- Major -->
@@ -210,6 +227,9 @@
                         Business Administration
                     </option>
                 </select>
+                <c:if test="${not empty errorMajor}">
+                    <span class="error">⚠️ ${errorMajor}</span>
+                </c:if>
             </div>
             
             <!-- Buttons -->

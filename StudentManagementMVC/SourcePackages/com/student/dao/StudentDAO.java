@@ -76,6 +76,168 @@ public class StudentDAO {
         
         return null;
     }
+
+    public List<Student> searchStudents(String keyword) {
+        List<Student> students = new ArrayList<>();
+        
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return students; 
+        }
+        
+        String sql = "SELECT * FROM students WHERE student_code LIKE ? OR full_name LIKE ? OR email LIKE ? ORDER BY id DESC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            String searchPattern = "%" + keyword.trim() + "%";
+            
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+            
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                Student student = new Student();
+                student.setId(rs.getInt("id"));
+                student.setStudentCode(rs.getString("student_code"));
+                student.setFullName(rs.getString("full_name"));
+                student.setEmail(rs.getString("email"));
+                student.setMajor(rs.getString("major"));
+                student.setCreatedAt(rs.getTimestamp("created_at"));
+                students.add(student);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return students;
+    }
+    
+    private String validateSortBy(String sortBy) {
+        String[] validColumns = {"id", "student_code", "full_name", "email", "major"};
+        
+        if (sortBy != null) {
+            for (String column : validColumns) {
+                if (column.equals(sortBy)) {
+                    return sortBy;
+                }
+            }
+        }
+        return "id"; 
+    }
+    
+    private String validateOrder(String order) {
+        if ("desc".equalsIgnoreCase(order)) {
+            return "DESC";
+        }
+        return "ASC"; // default
+    }
+    
+    public List<Student> getStudentsSorted(String sortBy, String order) {
+        List<Student> students = new ArrayList<>();
+        
+        String validSortBy = validateSortBy(sortBy);
+        String validOrder = validateOrder(order);
+        
+        String sql = "SELECT * FROM students ORDER BY " + validSortBy + " " + validOrder;
+        
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                Student student = new Student();
+                student.setId(rs.getInt("id"));
+                student.setStudentCode(rs.getString("student_code"));
+                student.setFullName(rs.getString("full_name"));
+                student.setEmail(rs.getString("email"));
+                student.setMajor(rs.getString("major"));
+                student.setCreatedAt(rs.getTimestamp("created_at"));
+                students.add(student);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return students;
+    }
+    
+    public List<Student> getStudentsByMajor(String major) {
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT * FROM students WHERE major = ? ORDER BY id DESC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, major);
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                Student student = new Student();
+                student.setId(rs.getInt("id"));
+                student.setStudentCode(rs.getString("student_code"));
+                student.setFullName(rs.getString("full_name"));
+                student.setEmail(rs.getString("email"));
+                student.setMajor(rs.getString("major"));
+                student.setCreatedAt(rs.getTimestamp("created_at"));
+                students.add(student);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return students;
+    }
+    
+    // BONUS: Combined method - handles BOTH sorting AND filtering
+    public List<Student> getStudentsFiltered(String major, String sortBy, String order) {
+        List<Student> students = new ArrayList<>();
+        
+        // Validate sort parameters
+        String validSortBy = validateSortBy(sortBy);
+        String validOrder = validateOrder(order);
+        
+        // Build SQL based on whether major filter is provided
+        String sql;
+        boolean hasFilter = (major != null && !major.trim().isEmpty() && !"all".equalsIgnoreCase(major));
+        
+        if (hasFilter) {
+            sql = "SELECT * FROM students WHERE major = ? ORDER BY " + validSortBy + " " + validOrder;
+        } else {
+            sql = "SELECT * FROM students ORDER BY " + validSortBy + " " + validOrder;
+        }
+        
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            // Set parameter only if filtering by major
+            if (hasFilter) {
+                pstmt.setString(1, major);
+            }
+            
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                Student student = new Student();
+                student.setId(rs.getInt("id"));
+                student.setStudentCode(rs.getString("student_code"));
+                student.setFullName(rs.getString("full_name"));
+                student.setEmail(rs.getString("email"));
+                student.setMajor(rs.getString("major"));
+                student.setCreatedAt(rs.getTimestamp("created_at"));
+                students.add(student);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return students;
+    }
     
     // Add new student
     public boolean addStudent(Student student) {
